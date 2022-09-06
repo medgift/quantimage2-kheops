@@ -1,0 +1,15 @@
+version: "3.1"
+
+services:
+
+  pacs-arc:
+    ports:
+      - 8080:8080
+
+  kheops-postgres:
+    ports:
+      - 5432:5432
+
+  kheops-authorization:
+    extra_hosts:
+      - keycloak:host-gateway

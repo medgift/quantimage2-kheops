@@ -1,0 +1,37 @@
+version: "3.1"
+
+services:
+
+  ldap:
+    restart: unless-stopped
+
+  pacs-postgres:
+    restart: unless-stopped
+
+  pacs-arc:
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+
+  kheops-postgres:
+    restart: unless-stopped
+
+  kheops-authorization:
+    restart: unless-stopped
+    extra_hosts:
+      - keycloak:host-gateway
+
+  kheops-zipper:
+    restart: unless-stopped
+
+  kheops-ui:
+    restart: unless-stopped
+
+  kheops-dicomweb-proxy:
+    restart: unless-stopped
+
+  kheops-reverse-proxy:
+    restart: unless-stopped
+
+  pacs-authorization-proxy:
+    restart: unless-stopped
