@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  kheops-reverse-proxy:
+    labels:
+      - "traefik.backend=${TRAEFIK_BACKEND_KHEOPS}"
+      - "traefik.docker.network=prod"
+      - "traefik.frontend.rule=Host:${TRAEFIK_URL_KHEOPS}"
+      - "traefik.enable=true"
+      - "traefik.port=8042"
+    networks:
+      - prod
+
+  pacs-arc:
+    labels:
+      - "traefik.backend=kheops-arc"
+      - "traefik.docker.network=prod"
+      - "traefik.frontend.rule=Host:arc.kheops.ehealth.hevs.ch"
+      - "traefik.enable=true"
+      - "traefik.port=8080"
+      - "traefik.frontend.whitelistSourceRange=${TRAEFIK_WHITELIST_ARC}"
+    networks:
+      - prod
+
+networks:
+  prod:
+    external: true
+    name: ${TRAEFIK_NETWORK}
