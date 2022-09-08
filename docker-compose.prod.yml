@@ -15,7 +15,7 @@ services:
     labels:
       - "traefik.backend=kheops-arc"
       - "traefik.docker.network=prod"
-      - "traefik.frontend.rule=Host:arc.kheops.ehealth.hevs.ch"
+      - "traefik.frontend.rule=Host:${TRAEFIK_URL_ARC}"
       - "traefik.enable=true"
       - "traefik.port=8080"
       - "traefik.frontend.whitelistSourceRange=${TRAEFIK_WHITELIST_ARC}"
