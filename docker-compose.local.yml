@@ -2,6 +2,10 @@ version: "3.1"
 
 services:
 
+  kheops-reverse-proxy:
+    ports:
+      - 80:8042
+
   pacs-arc:
     ports:
       - 8080:8080
