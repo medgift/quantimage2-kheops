@@ -10,6 +10,8 @@ services:
       - "traefik.port=8042"
     networks:
       - prod
+      - kheops_network
+      - frontend_network
 
   pacs-arc:
     labels:
@@ -21,6 +23,7 @@ services:
       - "traefik.frontend.whitelistSourceRange=${TRAEFIK_WHITELIST_ARC}"
     networks:
       - prod
+      - pacs_network
 
 networks:
   prod:
