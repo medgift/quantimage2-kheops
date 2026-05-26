@@ -8,12 +8,6 @@ services:
     image: dcm4che/slapd-dcm4chee:2.6.0-25.1
     env_file: docker-compose.env
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost -b '' -s base > /dev/null 2>&1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
     networks:
       - pacs_network
 
@@ -31,12 +25,6 @@ services:
       POSTGRES_USER: kheops_pacs
       POSTGRES_PASSWORD_FILE: /run/secrets/kheops_pacsdb_pass
     env_file: docker-compose.env
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kheops_pacs -d kheops_pacs"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
     volumes:
       - dcm4chee-db-data:/var/lib/postgresql/data
     secrets:
@@ -63,9 +51,9 @@ services:
       - kheops_pacsdb_pass
     depends_on:
       ldap:
-        condition: service_healthy
+        condition: service_started
       pacs-postgres:
-        condition: service_healthy
+        condition: service_started
     volumes:
       - dcm4chee-arc-wildfly:/opt/wildfly/standalone
       - dcm4chee-arc-storage:/storage
@@ -83,12 +71,6 @@ services:
       POSTGRES_DB: kheops
       POSTGRES_USER: kheopsuser
       POSTGRES_PASSWORD_FILE: /run/secrets/kheops_authdb_pass
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kheopsuser -d kheops"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
     secrets:
       - kheops_authdb_pass
     networks:
@@ -108,7 +90,7 @@ services:
       CATALINA_OPTS: -Duser.timezone=UTC
     depends_on:
       kheops-postgres:
-        condition: service_healthy
+        condition: service_started  
     secrets:
       - kheops_auth_hmasecret
       - kheops_authdb_pass
