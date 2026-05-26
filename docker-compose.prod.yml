@@ -1,13 +1,11 @@
-version: "3.7"
-
+#https://github.com/docker-library/postgres/issues/151
 services:
   kheops-reverse-proxy:
     labels:
-      - "traefik.backend=${TRAEFIK_BACKEND_KHEOPS}"
       - "traefik.docker.network=prod"
-      - "traefik.frontend.rule=Host:${TRAEFIK_URL_KHEOPS}"
+      - "traefik.http.routers.kheops-kheops-reverse-proxy.rule=Host(`${TRAEFIK_URL_KHEOPS}`)"
       - "traefik.enable=true"
-      - "traefik.port=8042"
+      - "traefik.http.services.kheops-kheops-reverse-proxy.loadbalancer.server.port=8042"
     networks:
       - prod
       - kheops_network
@@ -15,15 +13,59 @@ services:
 
   pacs-arc:
     labels:
-      - "traefik.backend=kheops-arc"
       - "traefik.docker.network=prod"
-      - "traefik.frontend.rule=Host:${TRAEFIK_URL_ARC}"
+      - "traefik.http.middlewares.kheops-pacs-arc-basic-auth.basicauth.users=${TRAEFIK_BASIC_AUTH_ARC_USERS}"
+      - "traefik.http.routers.kheops-pacs-arc.rule=Host(`arc.kheops.ehealth.hevs.ch`)"
+      - "traefik.http.routers.kheops-pacs-arc.middlewares=kheops-pacs-arc-basic-auth"
       - "traefik.enable=true"
-      - "traefik.port=8080"
-      - "traefik.frontend.whitelistSourceRange=${TRAEFIK_WHITELIST_ARC}"
+      - "traefik.http.services.kheops-pacs-arc.loadbalancer.server.port=8080"
     networks:
       - prod
       - pacs_network
+
+  backup-kheops-db:
+    image: prodrigestivill/postgres-backup-local
+    restart: unless-stopped
+    volumes:
+      - ${KHEOPS_DB_BACKUP_DIRECTORY}:/backups
+    depends_on:
+      - kheops-postgres
+    secrets:
+      - kheops_authdb_pass
+    networks:
+      - kheops_network
+    environment:
+      - POSTGRES_HOST=kheops-postgres
+      - POSTGRES_DB=kheops
+      - POSTGRES_USER=kheopsuser
+      - POSTGRES_PASSWORD_FILE=/run/secrets/kheops_authdb_pass
+      - POSTGRES_EXTRA_OPTS=-Z6 --schema=public --blobs
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=30
+      - BACKUP_KEEP_WEEKS=4
+      - BACKUP_KEEP_MONTHS=3
+
+  backup-pacs-db:
+    image: prodrigestivill/postgres-backup-local
+    restart: unless-stopped
+    volumes:
+      - ${PACS_DB_BACKUP_DIRECTORY}:/backups
+    depends_on:
+      - pacs-postgres
+    secrets:
+      - kheops_pacsdb_pass
+    networks:
+      - pacs_network
+    environment:
+      - POSTGRES_HOST=pacs-postgres
+      - POSTGRES_DB=kheops_pacs
+      - POSTGRES_USER=kheops_pacs
+      - POSTGRES_PASSWORD_FILE=/run/secrets/kheops_pacsdb_pass
+      - POSTGRES_EXTRA_OPTS=-Z6 --schema=public --blobs
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=30
+      - BACKUP_KEEP_WEEKS=4
+      - BACKUP_KEEP_MONTHS=3
 
 networks:
   prod:

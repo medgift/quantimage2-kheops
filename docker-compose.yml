@@ -7,6 +7,7 @@ services:
     container_name: ldap
     image: dcm4che/slapd-dcm4chee:2.6.0-25.1
     env_file: docker-compose.env
+    restart: unless-stopped
     networks:
       - pacs_network
 
@@ -14,6 +15,7 @@ services:
   pacs-postgres:
     container_name: pacspostgres
     image: dcm4che/postgres-dcm4chee:13.5-25
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
@@ -34,6 +36,7 @@ services:
   pacs-arc:
     container_name: pacsarc
     image: dcm4che/dcm4chee-arc-psql:5.25.1
+    restart: unless-stopped
     env_file: docker-compose.env
     environment:
       POSTGRES_DB: kheops_pacs
@@ -47,8 +50,10 @@ services:
     secrets:
       - kheops_pacsdb_pass
     depends_on:
-      - ldap
-      - pacs-postgres
+      ldap:
+        condition: service_healthy
+      pacs-postgres:
+        condition: service_healthy
     volumes:
       - dcm4chee-arc-wildfly:/opt/wildfly/standalone
       - dcm4chee-arc-storage:/storage
@@ -59,6 +64,7 @@ services:
   kheops-postgres:
     container_name: kheopspostgres
     image: postgres:12.9-alpine
+    restart: unless-stopped
     volumes:
       - kheops-db-data:/var/lib/postgresql/data
     environment:
@@ -73,6 +79,7 @@ services:
   kheops-authorization:
     container_name: kheopsauthorization
     image: osirixfoundation/kheops-authorization:v1.1.1
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
@@ -82,7 +89,8 @@ services:
     environment:
       CATALINA_OPTS: -Duser.timezone=UTC
     depends_on:
-      - kheops-postgres
+      kheops-postgres:
+        condition: service_healthy
     secrets:
       - kheops_auth_hmasecret
       - kheops_authdb_pass
@@ -95,6 +103,7 @@ services:
   kheops-zipper:
     container_name: kheopszipper
     image: osirixfoundation/kheops-zipper:v1.1.1
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
@@ -109,6 +118,7 @@ services:
   kheops-ui:
     container_name: kheopsui
     image: osirixfoundation/kheops-ui:v1.1.1
+    restart: unless-stopped
     env_file: docker-compose.env
     networks:
       - frontend_network
@@ -116,6 +126,7 @@ services:
   kheops-dicomweb-proxy:
     container_name: kheopsdicomwebproxy
     image: osirixfoundation/kheops-dicomweb-proxy:v1.1.1
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
@@ -131,6 +142,7 @@ services:
   kheops-reverse-proxy:
     image: osirixfoundation/kheops-reverse-proxy:v1.1.1-insecure
     container_name: kheopsreverseproxy
+    restart: unless-stopped
     env_file: docker-compose.env
     logging:
       driver: json-file
@@ -150,6 +162,7 @@ services:
     container_name: pacsauthorizationproxy
     env_file: docker-compose.env
     image: osirixfoundation/pacs-authorization-proxy:v1.1.1
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
